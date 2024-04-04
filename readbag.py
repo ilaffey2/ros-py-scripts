@@ -3,17 +3,14 @@ import rosbag
 import cv2
 import numpy as np
 from sensor_msgs.msg import Image, Imu
-from cv_bridge import CvBridge
 from ahrs.filters import Madgwick
+from rospy.numpy_msg import numpy_msg
 
 # Initialize ROS node
 rospy.init_node("gravity_visualization")
 
 # Load the rosbag
 bag = rosbag.Bag("/root/data/MH_01_easy.bag", "r", allow_unindexed=True)
-
-# Create a CvBridge instance
-bridge = CvBridge()
 
 # Create an AHRS filter instance
 madgwick = Madgwick()
@@ -26,8 +23,14 @@ gravity_direction = None
 for topic, msg, t in bag.read_messages(topics=["/cam0/image_raw", "/imu0"]):
     if topic == "/cam0/image_raw":
         try:
-            # Convert the image message to OpenCV format
-            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+            # Convert the image message to a NumPy array
+            cv_image = np.frombuffer(msg.data, dtype=np.uint8).reshape(
+                msg.height, msg.width, -1
+            )
+
+            # Convert the color space if needed
+            if msg.encoding == "rgb8":
+                cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
             # Display gravity direction on the image
             if gravity_direction is not None:
