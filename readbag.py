@@ -4,13 +4,13 @@ import cv2
 import numpy as np
 from sensor_msgs.msg import Image, Imu
 from cv_bridge import CvBridge
-from ahrs import Madgwick
+from ahrs.filters import Madgwick
 
 # Initialize ROS node
 rospy.init_node("gravity_visualization")
 
 # Load the rosbag
-bag = rosbag.Bag("~/data/MH_01_easy.bag")
+bag = rosbag.Bag("/Users/ianlaffey/theseus/data/euroc/MH_01/MH_01_easy.bag")
 
 # Create a CvBridge instance
 bridge = CvBridge()
