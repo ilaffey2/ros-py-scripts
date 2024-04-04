@@ -10,15 +10,16 @@ from ahrs.filters import Madgwick
 rospy.init_node("gravity_visualization")
 
 # Load the rosbag
-bag = rosbag.Bag("/Users/ianlaffey/theseus/data/euroc/MH_01/MH_01_easy.bag")
+bag = rosbag.Bag("/root/data/MH_01_easy.bag")
 
 # Create a CvBridge instance
 bridge = CvBridge()
 
 # Create an AHRS filter instance
-ahrs = Madgwick()
+madgwick = Madgwick()
 
 # Initialize variables for gravity direction
+quaternion = np.array([1.0, 0.0, 0.0, 0.0])  # Initial quaternion (w, x, y, z)
 gravity_direction = None
 
 # Iterate through the rosbag messages
@@ -42,20 +43,24 @@ for topic, msg, t in bag.read_messages(topics=["/camera/image_raw", "/imu0"]):
         # Display the image
         cv2.imshow("Camera Feed with Gravity Direction", cv_image)
         cv2.waitKey(1)
-
     elif topic == "/imu0":
-        # Update the AHRS filter with IMU data
-        ahrs.update(
-            msg.angular_velocity.x,
-            msg.angular_velocity.y,
-            msg.angular_velocity.z,
-            msg.linear_acceleration.x,
-            msg.linear_acceleration.y,
-            msg.linear_acceleration.z,
+        # Update the Madgwick filter with IMU data
+        gyroscope_data = np.array(
+            [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z]
+        )
+        accelerometer_data = np.array(
+            [
+                msg.linear_acceleration.x,
+                msg.linear_acceleration.y,
+                msg.linear_acceleration.z,
+            ]
         )
 
-        # Get the gravity direction in the camera frame
-        gravity_direction = ahrs.quaternion.to_euler()[:2]
+        quaternion = madgwick.updateIMU(quaternion, gyroscope_data, accelerometer_data)
+
+        # Extract the estimated gravity direction from the quaternion
+        gravity_direction = quaternion[1:]
+        gravity_direction /= np.linalg.norm(gravity_direction)
 
 # Close the rosbag
 bag.close()
