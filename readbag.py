@@ -10,7 +10,7 @@ from ahrs.filters import Madgwick
 rospy.init_node("gravity_visualization")
 
 # Load the rosbag
-bag = rosbag.Bag("/root/data/MH_01_easy.bag")
+bag = rosbag.Bag("/root/data/MH_01_easy.bag", "r", allow_unindexed=True)
 
 # Create a CvBridge instance
 bridge = CvBridge()
@@ -23,26 +23,29 @@ quaternion = np.array([1.0, 0.0, 0.0, 0.0])  # Initial quaternion (w, x, y, z)
 gravity_direction = None
 
 # Iterate through the rosbag messages
-for topic, msg, t in bag.read_messages(topics=["/camera/image_raw", "/imu0"]):
-    if topic == "/camera/image_raw":
-        # Convert the image message to OpenCV format
-        cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+for topic, msg, t in bag.read_messages(topics=["/cam0/image_raw", "/imu0"]):
+    if topic == "/cam0/image_raw":
+        try:
+            # Convert the image message to OpenCV format
+            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
 
-        # Display gravity direction on the image
-        if gravity_direction is not None:
-            # Convert gravity direction to pixel coordinates
-            center = (cv_image.shape[1] // 2, cv_image.shape[0] // 2)
-            gravity_pixel = (
-                int(center[0] + gravity_direction[0] * 100),
-                int(center[1] - gravity_direction[1] * 100),
-            )
+            # Display gravity direction on the image
+            if gravity_direction is not None:
+                # Convert gravity direction to pixel coordinates
+                center = (cv_image.shape[1] // 2, cv_image.shape[0] // 2)
+                gravity_pixel = (
+                    int(center[0] + gravity_direction[0] * 100),
+                    int(center[1] - gravity_direction[1] * 100),
+                )
 
-            # Draw an arrow representing the gravity direction
-            cv2.arrowedLine(cv_image, center, gravity_pixel, (0, 255, 0), 2)
+                # Draw an arrow representing the gravity direction
+                cv2.arrowedLine(cv_image, center, gravity_pixel, (0, 255, 0), 2)
 
-        # Display the image
-        cv2.imshow("Camera Feed with Gravity Direction", cv_image)
-        cv2.waitKey(1)
+            # Display the image
+            cv2.imshow("Camera Feed with Gravity Direction", cv_image)
+            cv2.waitKey(1)
+        except Exception as e:
+            rospy.logwarn("Error processing image: {}".format(str(e)))
     elif topic == "/imu0":
         # Update the Madgwick filter with IMU data
         gyroscope_data = np.array(
