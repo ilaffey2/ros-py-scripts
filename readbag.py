@@ -32,20 +32,23 @@ for topic, msg, t in bag.read_messages(topics=["/cam0/image_raw", "/imu0"]):
             if msg.encoding == "rgb8":
                 cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
 
+            # Create a copy of the image array
+            cv_image_copy = cv_image.copy()
+
             # Display gravity direction on the image
             if gravity_direction is not None:
                 # Convert gravity direction to pixel coordinates
-                center = (cv_image.shape[1] // 2, cv_image.shape[0] // 2)
+                center = (cv_image_copy.shape[1] // 2, cv_image_copy.shape[0] // 2)
                 gravity_pixel = (
                     int(center[0] + gravity_direction[0] * 100),
                     int(center[1] - gravity_direction[1] * 100),
                 )
 
                 # Draw an arrow representing the gravity direction
-                cv2.arrowedLine(cv_image, center, gravity_pixel, (0, 255, 0), 2)
+                cv2.arrowedLine(cv_image_copy, center, gravity_pixel, (0, 255, 0), 2)
 
             # Display the image
-            cv2.imshow("Camera Feed with Gravity Direction", cv_image)
+            cv2.imshow("Camera Feed with Gravity Direction", cv_image_copy)
             cv2.waitKey(1)
         except Exception as e:
             rospy.logwarn("Error processing image: {}".format(str(e)))
