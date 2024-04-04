@@ -1,3 +1,4 @@
+import os
 import rospy
 import rosbag
 import cv2
@@ -5,6 +6,9 @@ import numpy as np
 from sensor_msgs.msg import Image, Imu
 from ahrs.filters import Madgwick
 from rospy.numpy_msg import numpy_msg
+
+# Set the OpenCV window backend
+os.environ["CV_WINDOW_BACKEND"] = "x"  # or "x"
 
 # Initialize ROS node
 rospy.init_node("gravity_visualization")
