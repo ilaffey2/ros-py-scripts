@@ -1,0 +1,7 @@
+numpy
+opencv-python
+rospy
+rosbag
+sensor-msgs
+cv-bridge
+ahrs
